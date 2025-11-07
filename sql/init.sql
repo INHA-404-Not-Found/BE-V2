@@ -5,7 +5,7 @@ DROP TABLE if EXISTS member CASCADE;
 CREATE TABLE member
 (
     member_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    student_id VARCHAR(10) NOT NULL,
+    student_id BIGINT NOT NULL,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL,
