@@ -7,7 +7,13 @@
 
 #### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Purple%20Heart.png" alt="Purple Heart" width="25" height="25" /> Tech
 
-<img src="https://img.shields.io/badge/JAVA-007396?style=for-the-badge&logo=java&logoColor=white"> <img src="https://img.shields.io/badge/Javascript-F7DF1E?style=for-the-badge&logo=Javascript&logoColor=black"> <img src="https://img.shields.io/badge/html5-E34F26?style=for-the-badge&logo=html5&logoColor=white"> <img src="https://img.shields.io/badge/css-663399?style=for-the-badge&logo=css&logoColor=white"> <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=React&logoColor=black">
+<img src="https://img.shields.io/badge/JAVA-007396?style=for-the-badge&logo=java&logoColor=white">
+<img src="https://img.shields.io/badge/Javascript-F7DF1E?style=for-the-badge&logo=Javascript&logoColor=black"> 
+<img src="https://img.shields.io/badge/html5-E34F26?style=for-the-badge&logo=html5&logoColor=white"> 
+<img src="https://img.shields.io/badge/css-663399?style=for-the-badge&logo=css&logoColor=white"> 
+<img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=React&logoColor=black">
+<img src="https://img.shields.io/badge/Expo-1C2024?style=for-the-badge&logo=Expo&logoColor=black">
+<img src="https://img.shields.io/badge/Redux-764ABC?style=for-the-badge&logo=Redux&logoColor=white">
 
 ![대체 텍스트](https://camo.githubusercontent.com/ad933327ed241d88cd1c93f402e74d9a72cb26d2622316f048faa33633919b8f/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f537072696e6720426f6f742d3644423333463f7374796c653d666f722d7468652d6261646765266c6f676f3d537072696e67426f6f74266c6f676f436f6c6f723d7768697465)
 ![대체 텍스트](https://camo.githubusercontent.com/1d5094482cf699e58b93efa1def19b9018bc9b2b30795f685d73bd8a7a28bc93/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f537072696e672044617461204a70612d3030373844343f7374796c653d666f722d7468652d6261646765266c6f676f3d266c6f676f436f6c6f723d7768697465)
@@ -20,7 +26,7 @@
 ![대체 텍스트](https://camo.githubusercontent.com/5e7c1b08a7a0cb87520f88eabf60ba3c32ce5b7ddceed3808ac1c2dd1f37f3eb/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f4769746875622d3138313731373f7374796c653d666f722d7468652d6261646765266c6f676f3d476974687562266c6f676f436f6c6f723d7768697465)
 ![대체 텍스트](https://camo.githubusercontent.com/a0e4503e87270c05c76e1b69e7f68169b8323e1096b0febbabf4a2d988827100/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f4e6f74696f6e2d3030303030303f7374796c653d666f722d7468652d6261646765266c6f676f3d6e6f74696f6e266c6f676f436f6c6f723d7768697465)
 <img src="https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=black">
-
+<img src="https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=Figma&logoColor=black">
 
 #### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Pink%20Heart.png" alt="Pink Heart" width="25" height="25" /> Deploy
 <img src="https://img.shields.io/badge/AMAZON EC2-e47911?style=for-the-badge&logo=java&logoColor=white">
@@ -74,7 +80,8 @@ LOST INHA는 캠퍼스 내 분실물/습득물을 빠르고 체계적으로 관�
 ## 프로젝트 구조
 
 ### Frontend
-  ## 웹
+  ### - 웹
+
     +---public
     |   +---fonts
     |   \---images
@@ -92,7 +99,7 @@ LOST INHA는 캠퍼스 내 분실물/습득물을 빠르고 체계적으로 관�
       +---styles
       \---utils
 
-  ## 앱
+  ### - 앱
   
     MOBILE
     ├── .expo
