@@ -3,47 +3,23 @@
 </div>
 
 
-<div align="center">
+## 기술 스택
+- Frontend: JavaScript, HTML5, CSS, React, React Native, Expo, Redux
+- Backend: Spring Boot, Spring Data JPA, Spring Security, JWT, MySQL
 
-#### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Purple%20Heart.png" alt="Purple Heart" width="25" height="25" /> Tech
+## 사용 툴
+- Tools: Git Hub, Notion, Postman, Figma
 
-<img src="https://img.shields.io/badge/JAVA-007396?style=for-the-badge&logo=java&logoColor=white">
-<img src="https://img.shields.io/badge/Javascript-F7DF1E?style=for-the-badge&logo=Javascript&logoColor=black"> 
-<img src="https://img.shields.io/badge/html5-E34F26?style=for-the-badge&logo=html5&logoColor=white"> 
-<img src="https://img.shields.io/badge/css-663399?style=for-the-badge&logo=css&logoColor=white"> 
-<img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=React&logoColor=black">
-<img src="https://img.shields.io/badge/Expo-1C2024?style=for-the-badge&logo=Expo&logoColor=black">
-<img src="https://img.shields.io/badge/Redux-764ABC?style=for-the-badge&logo=Redux&logoColor=white">
-
-![대체 텍스트](https://camo.githubusercontent.com/ad933327ed241d88cd1c93f402e74d9a72cb26d2622316f048faa33633919b8f/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f537072696e6720426f6f742d3644423333463f7374796c653d666f722d7468652d6261646765266c6f676f3d537072696e67426f6f74266c6f676f436f6c6f723d7768697465)
-![대체 텍스트](https://camo.githubusercontent.com/1d5094482cf699e58b93efa1def19b9018bc9b2b30795f685d73bd8a7a28bc93/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f537072696e672044617461204a70612d3030373844343f7374796c653d666f722d7468652d6261646765266c6f676f3d266c6f676f436f6c6f723d7768697465)
-![대체 텍스트](https://camo.githubusercontent.com/91b949fd3f5d3d60475d1ab8c382735f3df6b1cab5ab8ea105df0d2adbb96bb5/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f537072696e672053656375726974792d364442333346203f7374796c653d666f722d7468652d6261646765266c6f676f3d537072696e675365637572697479266c6f676f436f6c6f723d7768697465)
-![대체 텍스트](https://camo.githubusercontent.com/b71403892b54c3adbfe60201be51fa894007f3971c6cf1062e8109727f0133f9/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f4a57542d3644423333463f7374796c653d666f722d7468652d6261646765266c6f676f3d4a736f6e576562546f6b656e73266c6f676f436f6c6f723d7768697465)
-<img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=MySQL&logoColor=black">
-
-#### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Blue%20Heart.png" alt="Blue Heart" width="25" height="25" /> Tools
-![대체 텍스트](https://camo.githubusercontent.com/b657d8051445da43d0e8b7f855ba02bde92bb80c7522bf4f0de45a2a6b92e6de/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f496e74656c6c694a20494445412d3030303030303f7374796c653d666f722d7468652d6261646765266c6f676f3d696e74656c6c696a49646561266c6f676f436f6c6f723d7768697465)
-![대체 텍스트](https://camo.githubusercontent.com/5e7c1b08a7a0cb87520f88eabf60ba3c32ce5b7ddceed3808ac1c2dd1f37f3eb/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f4769746875622d3138313731373f7374796c653d666f722d7468652d6261646765266c6f676f3d476974687562266c6f676f436f6c6f723d7768697465)
-![대체 텍스트](https://camo.githubusercontent.com/a0e4503e87270c05c76e1b69e7f68169b8323e1096b0febbabf4a2d988827100/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f4e6f74696f6e2d3030303030303f7374796c653d666f722d7468652d6261646765266c6f676f3d6e6f74696f6e266c6f676f436f6c6f723d7768697465)
-<img src="https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=black">
-<img src="https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=Figma&logoColor=black">
-
-#### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Pink%20Heart.png" alt="Pink Heart" width="25" height="25" /> Deploy
-<img src="https://img.shields.io/badge/AMAZON EC2-e47911?style=for-the-badge&logo=java&logoColor=white">
-<img src="https://img.shields.io/badge/RDS-1794D6?style=for-the-badge&logo=RDS&logoColor=black">
-<img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=Nginx&logoColor=black">
-
-</div>
-
+## 배포
+- Infra: Amazon EC2, RDS, NGINX
 
 <br><br><br>
 
 
 ## LOST-INHA
 
-여러분의 소중한 물건을 되찾을 수 있도록 도와드립니다.
 인하대학교 분실물 통합 관리 플랫폼입니다.
-교내 분실물을 최소화하고 학생들의 학교 생활의 질을 향상시켜줍니다.
+교내 분실물을 최소화하고 학생들의 학교 생활의 질을 향상시켜주고자 합니다.
 
 <br>
 
@@ -80,8 +56,7 @@ LOST INHA는 캠퍼스 내 분실물/습득물을 빠르고 체계적으로 관�
 ## 프로젝트 구조
 
 ### Frontend
-  ### - 웹
-
+  #### - 웹
     +---public
     |   +---fonts
     |   \---images
@@ -99,7 +74,7 @@ LOST INHA는 캠퍼스 내 분실물/습득물을 빠르고 체계적으로 관�
       +---styles
       \---utils
 
-  ### - 앱
+  #### - 앱
   
     MOBILE
     ├── .expo
@@ -259,37 +234,52 @@ LOST INHA는 캠퍼스 내 분실물/습득물을 빠르고 체계적으로 관�
 - expo: 54.x.x
 
 ### 환경 설정 및 실행
-- FE
-  <br>
-  (앱)
-  <br>
+#### FE
+  - 웹
+    
+    1️. 프로젝트 클론
+    
+    git clone https://github.com/INHA-404-Not-Found/ADMIN.git
+  
+    2️. 의존성 설치
+    
+    npm install
+  
+    3️. expo 실행
+    
+    npm start
+  
+  - 앱
+    
+    1️. 프로젝트 클론
+
+    git clone https://github.com/INHA-404-Not-Found/FE.git
+  
+    2️. 의존성 설치
+    
+    npm install
+  
+    3️. expo 실행
+    
+    npm start
+
+
+
+#### BE
   1️. 프로젝트 클론
-  <br>
-  git clone https://github.com/INHA-404-Not-Found/FE.git
-
-  2️. 의존성 설치
-  <br>
-  npm install
-
-  3️. expo 실행
-  <br>
-  npm start
-
-
-
-- BE
-  <br>
-  1️. 프로젝트 클론
-  <br>
+  
   git clone https://github.com/INHA-404-Not-Found/BE.git
 
   2️. 의존성 설치
-  <br>
+  
   ./gradlew build
 
   3️. 환경 변수 설정
   
-      -- resources/application.properties 환경변수 설정 --
+      -- resources/application.properties DB, 환경변수 등 설정 --
+      spring.application.name=next_campus
+  
+      # DB 관련
       spring.datasource.url=${YOUR_DB_URL}
       spring.datasource.username=${YOUR_DB_USERNAME}
       spring.datasource.password=${YOUR_DB_PASSWORD}
@@ -332,7 +322,7 @@ LOST INHA는 캠퍼스 내 분실물/습득물을 빠르고 체계적으로 관�
 <br>
 
 ## ERD
-<img width="1287" height="723" alt="Image" src="https://github-production-user-asset-6210df.s3.amazonaws.com/155566596/511143247-f0f2f139-23d1-4526-b6e3-d5fe149515e5.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20251107%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251107T055938Z&X-Amz-Expires=300&X-Amz-Signature=73b40204f95edf52d2294d1cdbb19b01ab22d61d97f4d902f54eafce8aa06c82&X-Amz-SignedHeaders=host" />
+<img width="2500" height="1422" alt="inha_next_campus_db (3)" src="https://github.com/user-attachments/assets/027d5b5e-168d-42b2-b565-c387e3c96b22" />
 
 
 <br>
@@ -345,4 +335,3 @@ LOST INHA는 캠퍼스 내 분실물/습득물을 빠르고 체계적으로 관�
 |                                     김도담                                     |                                     안유민                                     |                                      권도연                                      |                                   최지윤(팀장)                                   |
 
 <br>
-
