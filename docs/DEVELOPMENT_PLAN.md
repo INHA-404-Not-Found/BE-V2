@@ -18,8 +18,8 @@ BE-V2 레포 기준 개발 로드맵. 팀 논의로 정리된 항목을 우선�
 
 - [ ] Storage를 Firebase Storage로 전환 (`WebConfig.java`의 로컬 디스크 업로드 → Firebase Storage URL 저장으로 변경)
 - [ ] DB를 PostgreSQL로 전환 (MySQL 드라이버/dialect 교체, JPA 쿼리 중 MySQL 종속 문법 점검)
-- [ ] Docker-compose 구성 (로컬 개발용: API + Postgres + Redis)
-- [ ] Redis 추가 (JWT 리프레시 토큰 저장/블랙리스트, 캐싱 용도)
+- [x] Docker-compose 구성 (로컬 개발용: API + Postgres + Redis)
+- [x] Redis 추가 (JWT 리프레시 토큰 저장/블랙리스트, 캐싱 용도)
 - [ ] CI/CD를 Render 배포로 전환 (GitHub Actions → Render Deploy Hook 연동), Render는 PostgreSQL만 지원하므로 위 DB 전환이 선행 조건
 
 ## Code

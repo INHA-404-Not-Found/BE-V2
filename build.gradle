@@ -31,6 +31,7 @@ dependencies {
 	// DB
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	implementation 'com.mysql:mysql-connector-j'
+    runtimeOnly 'org.postgresql:postgresql' // 추가
 
 	// Spring Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
