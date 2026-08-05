@@ -1,0 +1,65 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: next_campus_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Create test application.properties
+        run: |
+          cat > src/main/resources/application.properties <<'EOF'
+          spring.application.name=next_campus
+          spring.jpa.hibernate.ddl-auto=validate
+
+          spring.datasource.url=jdbc:postgresql://localhost:5432/next_campus_test
+          spring.datasource.username=test
+          spring.datasource.password=test
+          spring.datasource.driver-class-name=org.postgresql.Driver
+          spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+          jwt.secret=ci-test-only-dummy-secret-key-not-used-in-production-with-extra-padding-for-hs512
+          jwt.access-token-expiration-ms=900000
+          jwt.refresh-token-expiration-ms=1209600000
+
+          fcm.firebase.config.path=
+          fcm.firebase.storage-bucket=ci-test-bucket
+
+          spring.mail.host=smtp.gmail.com
+          spring.mail.port=587
+          spring.mail.username=ci-test@example.com
+          spring.mail.password=ci-test-dummy
+
+          server.port=8080
+
+          spring.flyway.locations=filesystem:db/postgres/migration
+          EOF
+
+      - name: Run tests
+        run: chmod +x gradlew && ./gradlew test --no-daemon
