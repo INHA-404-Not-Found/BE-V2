@@ -48,7 +48,7 @@ public class TokenController {
             cookie.setHttpOnly(true);
             cookie.setPath("/");
             cookie.setMaxAge((int)(tokenProvider.refreshTokenMillis / 1000)); // 초 단위
-            cookie.setSecure(false); // 개발환경: false, 운영: true 및 HTTPS 사용
+            cookie.setSecure(true); // 개발환경: false, 운영: true 및 HTTPS 사용
             response.addCookie(cookie);
 
 

@@ -17,6 +17,8 @@ public class FirebaseConfig {
 
     @Value("${fcm.firebase.config.path}")
     private String SERVICE_ACCOUNT_PATH;
+    @Value("${fcm.firebase.storage-bucket}")
+    private String STORAGE_BUCKET;
 
     @Bean
     public FirebaseApp firebaseApp() {
@@ -32,6 +34,7 @@ public class FirebaseConfig {
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .setStorageBucket(STORAGE_BUCKET)
                     .build();
 
             log.info("Successfully initialized firebase app");

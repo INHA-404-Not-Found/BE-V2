@@ -15,6 +15,7 @@ import NotFound.next_campus.domain.post.repository.PostCategoryRepository;
 import NotFound.next_campus.domain.post.repository.PostImageRepository;
 import NotFound.next_campus.domain.post.repository.PostRepository;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
+import NotFound.next_campus.global.firebase.service.FirebaseStorageService;
 import NotFound.next_campus.global.mail.service.MailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class PostServiceImpl implements PostService {
 
-    private final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
+    // private final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
 
     private final MemberRepository memberRepository;
     private final MailService mailService;
@@ -50,6 +51,7 @@ public class PostServiceImpl implements PostService {
     private final PostImageRepository postImageRepository;
 
     private final NotificationService notificationService;
+    private final FirebaseStorageService firebaseStorageService;
 
     private static int PAGE_LIMIT = 10;
 
@@ -278,7 +280,8 @@ public class PostServiceImpl implements PostService {
                 .toList();
 
         List<String> images = postImageRepository.findByPost(post).stream()
-                .map(pi -> "/uploads/" + pi.getStoredFileName())
+                // .map(pi -> "/uploads/" + pi.getStoredFileName())
+                .map(pi -> firebaseStorageService.getPublicUrl(pi.getStoredFileName()))
                 .toList();
 
         return PostDTO.Response.from(post, categories, images);
@@ -374,7 +377,8 @@ public class PostServiceImpl implements PostService {
                 .collect(Collectors.groupingBy(
                         pi -> pi.getPost().getId(),
                         Collectors.mapping(
-                                pi -> "/uploads/" + pi.getStoredFileName(), Collectors.toList()
+                                // pi -> "/uploads/" + pi.getStoredFileName(), Collectors.toList()
+                                pi -> firebaseStorageService.getPublicUrl(pi.getStoredFileName()), Collectors.toList()
                         )
                 ));
 
@@ -414,6 +418,38 @@ public class PostServiceImpl implements PostService {
         return images;
     }
 
+    // 로컬 서버 저장 방식
+    /*
+    private String saveImage(Post post, MultipartFile file) {
+
+         if (file.isEmpty()) {
+             throw new IllegalArgumentException("이미지가 존재하지 않습니다.");
+         }
+
+         String originalFileName = file.getOriginalFilename();
+         String storedFileName = UUID.randomUUID() + "_" + originalFileName;
+
+         String path = UPLOAD_DIR + storedFileName;
+
+         try {
+             File destination = new File(path);
+             destination.getParentFile().mkdirs();
+             file.transferTo(destination);
+         } catch (IOException e) {
+             throw new IllegalArgumentException("파일 저장 실패");
+         }
+
+         postImageRepository.save(PostImage.builder()
+                 .post(post)
+                 .originalFileName(originalFileName)
+                 .storedFileName(storedFileName)
+                 .build());
+
+         return "/uploads/" + storedFileName;
+     }
+    */
+
+    // Firebase
     private String saveImage(Post post, MultipartFile file) {
 
         if (file.isEmpty()) {
@@ -421,17 +457,7 @@ public class PostServiceImpl implements PostService {
         }
 
         String originalFileName = file.getOriginalFilename();
-        String storedFileName = UUID.randomUUID() + "_" + originalFileName;
-
-        String path = UPLOAD_DIR + storedFileName;
-
-        try {
-            File destination = new File(path);
-            destination.getParentFile().mkdirs();
-            file.transferTo(destination);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("파일 저장 실패");
-        }
+        String storedFileName = firebaseStorageService.upload(file);
 
         postImageRepository.save(PostImage.builder()
                 .post(post)
@@ -439,7 +465,7 @@ public class PostServiceImpl implements PostService {
                 .storedFileName(storedFileName)
                 .build());
 
-        return "/uploads/" + storedFileName;
+        return firebaseStorageService.getPublicUrl(storedFileName);
     }
 
     private void deleteImages(List<PostImage> images) {
@@ -452,13 +478,21 @@ public class PostServiceImpl implements PostService {
         postImageRepository.deleteAll(images);
     }
 
+    /*
+     private void deleteImage(PostImage image) {
+
+         String oldFileName = image.getStoredFileName();
+         File oldFile = new File(UPLOAD_DIR + oldFileName);
+         if (oldFile.exists()) {
+             oldFile.delete();
+         }
+     }
+    */
+
+    // Firebase
     private void deleteImage(PostImage image) {
 
-        String oldFileName = image.getStoredFileName();
-        File oldFile = new File(UPLOAD_DIR + oldFileName);
-        if (oldFile.exists()) {
-            oldFile.delete();
-        }
+        firebaseStorageService.delete(image.getStoredFileName());
     }
 
     // 신규 습득 게시물 등록 시, 같은 카테고리의 분실 신고자들에게 알림 전송

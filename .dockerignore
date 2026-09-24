@@ -1,0 +1,13 @@
+.git
+.gradle
+build
+.idea
+.vscode
+uploads
+docs
+db/mysql
+*.md
+.env
+application.properties
+application-local.properties
+application-prod.properties
