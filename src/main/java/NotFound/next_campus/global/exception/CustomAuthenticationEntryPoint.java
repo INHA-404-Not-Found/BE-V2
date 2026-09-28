@@ -1,7 +1,6 @@
-package NotFound.next_campus.global.config.auth;
+package NotFound.next_campus.global.exception;
 
 import NotFound.next_campus.global.common.CommonResponse;
-import NotFound.next_campus.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
