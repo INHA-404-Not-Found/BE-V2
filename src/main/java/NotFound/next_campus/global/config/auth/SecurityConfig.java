@@ -5,6 +5,8 @@ import NotFound.next_campus.global.auth.token.filter.JwtAuthenticationFilter;
 import NotFound.next_campus.global.auth.token.service.JwtTokenProvider;
 import NotFound.next_campus.global.auth.token.service.MemberAuthService;
 import NotFound.next_campus.global.auth.user.CustomUserDetailsService;
+import NotFound.next_campus.global.exception.CustomAccessDeniedHandler;
+import NotFound.next_campus.global.exception.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
