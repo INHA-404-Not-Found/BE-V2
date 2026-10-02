@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -36,6 +37,14 @@ public class GlobalExceptionHandler {
         log.warn("[AccessDeniedException] {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(CommonResponse.fail(ErrorCode.FORBIDDEN));
+    }
+
+    // 로그인 시 AuthenticationManager.authenticate()가 던지는 예외 (아이디/비밀번호 불일치 등)
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<CommonResponse<Void>> handleAuthenticationException(AuthenticationException e) {
+        log.warn("[AuthenticationException] {}", e.getMessage());
+        return ResponseEntity.status(ErrorCode.INVALID_CREDENTIALS.getStatus())
+                .body(CommonResponse.fail(ErrorCode.INVALID_CREDENTIALS));
     }
 
     // 예상하지 못한 나머지 모든 예외 -> 500. 스택트레이스는 로그로만 남기고 클라이언트에는 노출하지 않음

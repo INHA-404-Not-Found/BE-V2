@@ -5,9 +5,10 @@ import NotFound.next_campus.domain.category.model.Category;
 import NotFound.next_campus.domain.category.repository.CategoryRepository;
 import NotFound.next_campus.domain.member.model.Role;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
+import NotFound.next_campus.global.exception.BusinessException;
+import NotFound.next_campus.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +26,7 @@ public class CategoryService {
         Role role = userDetails.getMember().getRole();
 
         if (role != Role.ADMIN) {
-            throw new RuntimeException("권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         //현재 로그인한 사용자의 이름과 role 로그로 확인
@@ -54,7 +55,7 @@ public class CategoryService {
     public CategoryDTO.Response getCategory(Long id) {
 
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
         return new CategoryDTO.Response(category.getId(), category.getName());
     }
@@ -64,11 +65,11 @@ public class CategoryService {
 
         // 권한 체크
         if (!userDetails.getMember().getRole().equals(Role.ADMIN)) {
-            throw new RuntimeException("권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
         category.setName(requestDTO.getName());
         Category updated = categoryRepository.save(category);
@@ -81,7 +82,7 @@ public class CategoryService {
 
         // 권한 체크
         if (!userDetails.getMember().getRole().equals(Role.ADMIN)) {
-            throw new RuntimeException("권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         categoryRepository.deleteById(id);

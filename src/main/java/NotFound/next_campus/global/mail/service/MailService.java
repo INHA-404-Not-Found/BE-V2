@@ -1,5 +1,7 @@
 package NotFound.next_campus.global.mail.service;
 
+import NotFound.next_campus.global.exception.BusinessException;
+import NotFound.next_campus.global.exception.ErrorCode;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +49,7 @@ public class MailService {
             // 4. 메일 발송
             mailSender.send(message);
         } catch (MessagingException e) {
-            e.printStackTrace();
-            // 필요 시 로깅 또는 예외 처리
+            throw new BusinessException(ErrorCode.MAIL_SEND_FAILED);
         }
     }
 }
