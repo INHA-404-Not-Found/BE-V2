@@ -3,6 +3,7 @@ package NotFound.next_campus.domain.notification.api;
 import NotFound.next_campus.domain.notification.dto.NotificationDTO;
 import NotFound.next_campus.domain.notification.service.NotificationService;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
+import NotFound.next_campus.global.common.CommonResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -32,26 +33,26 @@ public class NotificationController {
     }*/
 
     @GetMapping
-    public ResponseEntity<List<NotificationDTO.Response>> getMyNotifications(
+    public CommonResponse<List<NotificationDTO.Response>> getMyNotifications(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(page = 1) Pageable pageable,
             @RequestParam(required = false, defaultValue = "0", value = "page") int pageNo
     ) {
         pageNo = (pageNo == 0) ? 0 : pageNo - 1;
 
-        return ResponseEntity.ok().body(
+        return CommonResponse.ok(
                 notificationService.getNotifications(userDetails, pageable, pageNo)
         );
     }
 
     @PatchMapping("/{notification_id}/read")
-    public ResponseEntity<String> readNotification(
+    public CommonResponse<String> readNotification(
             @PathVariable("notification_id") Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         notificationService.markAsRead(id, userDetails);
 
-        return ResponseEntity.ok().body(
+        return CommonResponse.ok(
                 "알림 읽기 성공"
         );
     }
