@@ -11,6 +11,10 @@ import NotFound.next_campus.global.auth.token.service.TokenService;
 import NotFound.next_campus.global.auth.token.service.TokenService.LoginTokens;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
 import NotFound.next_campus.global.common.CommonResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +28,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
  * - /auth/refresh : refresh 토큰으로 access 토큰 재발급 (쿠키 우선, 바디로도 가능)
  * - /auth/logout : 로그아웃 (DB에서 refresh 토큰 제거, 쿠키 삭제)
  */
+@Tag(name = "Auth", description = "인증/인가 관련 API")
 @RestController
 @RequestMapping("/auth")
 public class TokenController {
@@ -38,6 +43,11 @@ public class TokenController {
     }
 
 
+    @Operation(summary = "로그인", description = "학번과 비밀번호로 로그인합니다. isWeb이 true면 refresh token을 HttpOnly 쿠키로 전달하고, false면 access/refresh token을 모두 JSON으로 반환합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "로그인 성공"),
+            @ApiResponse(responseCode = "401", description = "AUTH004 - 아이디 또는 비밀번호가 일치하지 않습니다.")
+    })
     @PostMapping("/login")
     public ResponseEntity<CommonResponse<LoginResponse>> login(@RequestBody LoginRequest req, HttpServletResponse response) {
         LoginTokens tokens = tokenService.login(req);
@@ -63,6 +73,11 @@ public class TokenController {
     }
 
 
+    @Operation(summary = "Access Token 재발급", description = "Refresh Token(쿠키 우선, 없으면 바디)으로 새로운 Access/Refresh Token을 발급합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "재발급 성공"),
+            @ApiResponse(responseCode = "401", description = "AUTH001/AUTH002/AUTH003 - Refresh Token이 유효하지 않거나, 존재하지 않거나, 만료되었습니다.")
+    })
     @PostMapping("/refresh")
     public ResponseEntity<CommonResponse<LoginResponse>> refresh(@CookieValue(name = "REFRESH_TOKEN", required = false) String cookieRefresh,
                                      @RequestBody(required = false) RefreshRequest body) {
@@ -72,6 +87,8 @@ public class TokenController {
     }
 
 
+    @Operation(summary = "로그아웃", description = "DB에서 Refresh Token을 제거하고 쿠키를 삭제합니다.")
+    @ApiResponse(responseCode = "200", description = "로그아웃 성공")
     @PostMapping("/logout")
     public ResponseEntity<CommonResponse<Void>> logout(@CookieValue(name = "REFRESH_TOKEN", required = false) String cookieRefresh,
                                     @RequestBody(required = false) RefreshRequest body,
@@ -91,6 +108,11 @@ public class TokenController {
         return ResponseEntity.ok(CommonResponse.ok());
     }
 
+    @Operation(summary = "내 프로필 조회", description = "로그인한 사용자의 프로필 정보를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "AUTH001 - 인증이 필요합니다.")
+    })
     @GetMapping("/profile")
     public ResponseEntity<CommonResponse<ProfileResponse>> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
         ProfileResponse profile = memberAuthService.getProfile(userDetails);
