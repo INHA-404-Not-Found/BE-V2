@@ -1,6 +1,8 @@
 package NotFound.next_campus.global.mail.api;
 
+import NotFound.next_campus.global.common.CommonResponse;
 import NotFound.next_campus.global.mail.service.MailService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -17,7 +19,7 @@ public class MailController {
     }
 
     @PostMapping("/sendPersonalLost")
-    public String sendPersonalLostMail(@RequestParam String to,
+    public ResponseEntity<CommonResponse<String>> sendPersonalLostMail(@RequestParam String to,
                                        @RequestParam String name,
                                        @RequestParam String title,
                                        @RequestParam String createdAt) {
@@ -25,6 +27,6 @@ public class MailController {
         LocalDateTime createdDate = LocalDateTime.parse(createdAt, DateTimeFormatter.ISO_DATE_TIME);
 
         mailService.sendPersonalLostEmail(to, name, title, createdDate);
-        return "개인 분실물 메일 전송 완료";
+        return ResponseEntity.ok(CommonResponse.ok("개인 분실물 메일 전송 완료"));
     }
 }

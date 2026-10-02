@@ -10,6 +10,7 @@ import NotFound.next_campus.global.auth.token.service.MemberAuthService;
 import NotFound.next_campus.global.auth.token.service.TokenService;
 import NotFound.next_campus.global.auth.token.service.TokenService.LoginTokens;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
+import NotFound.next_campus.global.common.CommonResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,7 @@ public class TokenController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest req, HttpServletResponse response) {
+    public ResponseEntity<CommonResponse<LoginResponse>> login(@RequestBody LoginRequest req, HttpServletResponse response) {
         LoginTokens tokens = tokenService.login(req);
 
 
@@ -53,26 +54,26 @@ public class TokenController {
 
 
             // access token은 JSON으로 전달 (웹에서는 프론트가 받아서 세션/메모리 관리)
-            return ResponseEntity.ok(new LoginResponse(tokens.accessToken, null));
+            return ResponseEntity.ok(CommonResponse.ok(new LoginResponse(tokens.accessToken, null)));
         }
 
 
         // 앱: access + refresh 토큰을 JSON으로 반환 (앱은 refresh를 Secure Storage에 저장)
-        return ResponseEntity.ok(new LoginResponse(tokens.accessToken, tokens.refreshToken));
+        return ResponseEntity.ok(CommonResponse.ok(new LoginResponse(tokens.accessToken, tokens.refreshToken)));
     }
 
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@CookieValue(name = "REFRESH_TOKEN", required = false) String cookieRefresh,
+    public ResponseEntity<CommonResponse<LoginResponse>> refresh(@CookieValue(name = "REFRESH_TOKEN", required = false) String cookieRefresh,
                                      @RequestBody(required = false) RefreshRequest body) {
         String refresh = cookieRefresh != null ? cookieRefresh : (body != null ? body.getRefreshToken() : null);
         LoginTokens tokens = tokenService.refresh(refresh);
-        return ResponseEntity.ok(new LoginResponse(tokens.accessToken, tokens.refreshToken));
+        return ResponseEntity.ok(CommonResponse.ok(new LoginResponse(tokens.accessToken, tokens.refreshToken)));
     }
 
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@CookieValue(name = "REFRESH_TOKEN", required = false) String cookieRefresh,
+    public ResponseEntity<CommonResponse<Void>> logout(@CookieValue(name = "REFRESH_TOKEN", required = false) String cookieRefresh,
                                     @RequestBody(required = false) RefreshRequest body,
                                     HttpServletResponse response) {
         String refresh = cookieRefresh != null ? cookieRefresh : (body != null ? body.getRefreshToken() : null);
@@ -87,13 +88,13 @@ public class TokenController {
         response.addCookie(cookie);
 
 
-        return ResponseEntity.ok().body("logged out");
+        return ResponseEntity.ok(CommonResponse.ok());
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<ProfileResponse> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<CommonResponse<ProfileResponse>> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
         ProfileResponse profile = memberAuthService.getProfile(userDetails);
-        return ResponseEntity.ok(profile);
+        return ResponseEntity.ok(CommonResponse.ok(profile));
     }
 
 }

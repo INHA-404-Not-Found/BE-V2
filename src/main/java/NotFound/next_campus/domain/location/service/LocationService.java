@@ -5,6 +5,8 @@ import NotFound.next_campus.domain.location.model.Location;
 import NotFound.next_campus.domain.location.repository.LocationRepository;
 import NotFound.next_campus.domain.member.model.Role;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
+import NotFound.next_campus.global.exception.BusinessException;
+import NotFound.next_campus.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +26,7 @@ public class LocationService {
         Role role = userDetails.getMember().getRole();
 
         if (role != Role.ADMIN) {
-            throw new RuntimeException("권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         Location location = Location.builder()
@@ -48,7 +50,7 @@ public class LocationService {
     public LocationDTO.Response getLocation(Long id) {
 
         Location location = locationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 위치입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.LOCATION_NOT_FOUND));
 
         return new LocationDTO.Response(location.getId(), location.getName());
     }
@@ -58,11 +60,11 @@ public class LocationService {
 
         // 권한 체크
         if (!userDetails.getMember().getRole().equals(Role.ADMIN)) {
-            throw new RuntimeException("권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         Location location = locationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 위치입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.LOCATION_NOT_FOUND));
 
         location.setName(requestDTO.getName());
         Location updated = locationRepository.save(location);
@@ -75,7 +77,7 @@ public class LocationService {
 
         // 권한 체크
         if (!userDetails.getMember().getRole().equals(Role.ADMIN)) {
-            throw new RuntimeException("권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         locationRepository.deleteById(id);
