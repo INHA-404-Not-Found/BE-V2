@@ -9,6 +9,8 @@ import NotFound.next_campus.domain.receiver.dto.ReceiverDTO;
 import NotFound.next_campus.domain.receiver.model.Receiver;
 import NotFound.next_campus.domain.receiver.repository.ReceiverRepository;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
+import NotFound.next_campus.global.exception.BusinessException;
+import NotFound.next_campus.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -32,11 +34,11 @@ public class ReceiverServiceImpl implements ReceiverService {
         Member member = userDetails.getMember();
 
         if (!Role.ADMIN.equals(member.getRole())) {
-            throw new AccessDeniedException("수령인 등록 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.RECEIVER_REGISTER_FORBIDDEN);
         }
 
         Post post = postRepository.findById(dto.getPostId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         Receiver receiver = receiverRepository.save(Receiver.builder()
                 .post(post)
@@ -55,11 +57,11 @@ public class ReceiverServiceImpl implements ReceiverService {
         Member member = userDetails.getMember();
 
         if (!Role.ADMIN.equals(member.getRole())) {
-            throw new AccessDeniedException("수령인 수정 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.RECEIVER_UPDATE_FORBIDDEN);
         }
 
         Receiver receiver = receiverRepository.findById(receiverId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수령인입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RECEIVER_NOT_FOUND));
 
         if(dto.getName() != null) receiver.setName(dto.getName());
         if(dto.getEmail() != null) receiver.setEmail(dto.getEmail());
@@ -71,11 +73,11 @@ public class ReceiverServiceImpl implements ReceiverService {
     public void deleteReceiver(Long receiverId, CustomUserDetails userDetails) {
 
         if(!Role.ADMIN.equals(userDetails.getRole())) {
-            throw new AccessDeniedException("수령인 삭제 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.RECEIVER_DELETE_FORBIDDEN);
         }
 
         Receiver receiver = receiverRepository.findById(receiverId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수령인입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RECEIVER_NOT_FOUND));
 
         receiverRepository.delete(receiver);
     }
@@ -84,11 +86,11 @@ public class ReceiverServiceImpl implements ReceiverService {
     public ReceiverDTO.Response getReceiverInfo(Long receiverId, CustomUserDetails userDetails) {
 
         if(!Role.ADMIN.equals(userDetails.getRole())) {
-            throw new AccessDeniedException("수령인 조회 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.RECEIVER_READ_FORBIDDEN);
         }
 
         Receiver receiver = receiverRepository.findById(receiverId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수령인입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RECEIVER_NOT_FOUND));
 
         return ReceiverDTO.Response.from(receiver);
     }
@@ -97,11 +99,11 @@ public class ReceiverServiceImpl implements ReceiverService {
     public ReceiverDTO.Response getReceiverByPost(Long postId, CustomUserDetails userDetails) {
 
         if(!Role.ADMIN.equals(userDetails.getRole())) {
-            throw new AccessDeniedException("수령인 조회 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.RECEIVER_READ_FORBIDDEN);
         }
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         Optional<Receiver> receiver = receiverRepository.findByPost(post);
 
@@ -117,7 +119,7 @@ public class ReceiverServiceImpl implements ReceiverService {
     public List<ReceiverDTO.Response> getAllReceivers(CustomUserDetails userDetails) {
 
         if(!Role.ADMIN.equals(userDetails.getRole())) {
-            throw new AccessDeniedException("수령인 조회 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.RECEIVER_READ_FORBIDDEN);
         }
         
         return receiverRepository.findAll().stream()

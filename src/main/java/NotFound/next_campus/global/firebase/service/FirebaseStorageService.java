@@ -1,5 +1,7 @@
 package NotFound.next_campus.global.firebase.service;
 
+import NotFound.next_campus.global.exception.BusinessException;
+import NotFound.next_campus.global.exception.ErrorCode;
 import com.google.cloud.storage.Acl;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -23,7 +25,7 @@ public class FirebaseStorageService {
     public String upload(MultipartFile file) {
 
         if (file.isEmpty()) {
-            throw new IllegalArgumentException("이미지가 존재하지 않습니다.");
+            throw new BusinessException(ErrorCode.IMAGE_NOT_FOUND);
         }
 
         String objectName = UPLOAD_FOLDER + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
@@ -34,7 +36,8 @@ public class FirebaseStorageService {
             Blob blob = bucket.create(objectName, inputStream, file.getContentType());
             blob.createAcl(Acl.of(Acl.User.ofAllUsers(), Acl.Role.READER));
         } catch (IOException e) {
-            throw new IllegalArgumentException("파일 저장 실패", e);
+            log.error("Firebase 업로드 실패 objectName={}", objectName, e);
+            throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
 
         return objectName;
