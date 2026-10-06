@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -170,6 +171,7 @@ public class PostController {
             @ApiResponse(responseCode = "404", description = "POST001 - 존재하지 않는 게시물입니다.")
     })
     @GetMapping("/{post_id}")
+    @SecurityRequirements
     public CommonResponse<PostDTO.Response> getPost(
             @Parameter(description = "게시물 ID") @PathVariable("post_id") Long postId
     ) {
@@ -181,6 +183,7 @@ public class PostController {
     @Operation(summary = "게시물 전체 조회", description = "전체 게시물을 최신순으로 페이지당 10개씩 조회합니다. 로그인 없이 조회 가능합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping
+    @SecurityRequirements
     public CommonResponse<List<PostDTO.Response>> getAllPosts(
             @Parameter(hidden = true) @PageableDefault(page = 1) Pageable pageable,
             @Parameter(description = "페이지 번호 (1부터 시작, 생략 시 1)")
@@ -197,6 +200,7 @@ public class PostController {
             + "조건은 모두 선택값이며, 생략한 조건은 필터링하지 않습니다. 로그인 없이 조회 가능합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/tags")
+    @SecurityRequirements
     public CommonResponse<List<PostDTO.Response>> getPostsByTags(
             @Parameter(description = "게시물 상태") @RequestParam(value = "status", required = false) PostStatus status,
             @Parameter(description = "게시물 유형") @RequestParam(value = "type", required = false) PostType type,
@@ -217,6 +221,7 @@ public class PostController {
     @Operation(summary = "키워드 게시물 검색", description = "키워드로 게시물을 검색해 최신순으로 페이지당 10개씩 조회합니다. 로그인 없이 조회 가능합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/search")
+    @SecurityRequirements
     public CommonResponse<List<PostDTO.Response>> getPostsByKeyword(
             @Parameter(description = "검색 키워드") @RequestParam("keyword") String keyword,
             @Parameter(hidden = true) @PageableDefault(page = 1) Pageable pageable,
@@ -253,6 +258,7 @@ public class PostController {
             + "태그 조건은 모두 선택값입니다. 로그인 없이 조회 가능합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/search/tags")
+    @SecurityRequirements
     public CommonResponse<List<PostDTO.Response>> getPostsByKeywordAndTags(
             @Parameter(description = "검색 키워드") @RequestParam("keyword") String keyword,
             @Parameter(description = "게시물 상태") @RequestParam(value = "status", required = false) PostStatus status,

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -82,6 +83,7 @@ public class CommentController {
             @ApiResponse(responseCode = "404", description = "POST001 - 존재하지 않는 게시물입니다.")
     })
     @GetMapping("/{post_id}")
+    @SecurityRequirements
     public CommonResponse<List<CommentDTO.Response>> getComments(
             @Parameter(description = "게시물 ID") @PathVariable("post_id") Long postId
     ) {
