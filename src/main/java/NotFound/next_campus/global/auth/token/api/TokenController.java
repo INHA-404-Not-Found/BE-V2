@@ -14,6 +14,7 @@ import NotFound.next_campus.global.common.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -49,6 +50,7 @@ public class TokenController {
             @ApiResponse(responseCode = "401", description = "AUTH004 - 아이디 또는 비밀번호가 일치하지 않습니다.")
     })
     @PostMapping("/login")
+    @SecurityRequirements
     public ResponseEntity<CommonResponse<LoginResponse>> login(@RequestBody LoginRequest req, HttpServletResponse response) {
         LoginTokens tokens = tokenService.login(req);
 

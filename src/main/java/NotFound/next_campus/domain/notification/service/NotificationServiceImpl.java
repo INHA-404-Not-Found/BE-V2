@@ -6,6 +6,8 @@ import NotFound.next_campus.domain.notification.dto.NotificationDTO;
 import NotFound.next_campus.domain.notification.model.Notification;
 import NotFound.next_campus.domain.notification.repository.NotificationRepository;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
+import NotFound.next_campus.global.exception.BusinessException;
+import NotFound.next_campus.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,7 +40,7 @@ public class NotificationServiceImpl implements  NotificationService {
     public void sendAndSaveNotification(NotificationDTO.CreateRequest dto) {
 
         Member member = memberRepository.findById(dto.getMemberId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         /*// 해당 회원의 모든 FCM 토큰 조회
         List<String> tokens = fcmTokenRepository.findTokensByMember(member);
@@ -96,10 +98,10 @@ public class NotificationServiceImpl implements  NotificationService {
     public void markAsRead(Long id, CustomUserDetails userDetails) {
 
         Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 알림입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
         if (!notification.getMember().equals(userDetails.getMember())) {
-            throw new AccessDeniedException("해당 알림에 대한 읽기 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.NOTIFICATION_READ_FORBIDDEN);
         }
 
         notification.setIsRead(true);
