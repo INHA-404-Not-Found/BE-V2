@@ -44,7 +44,7 @@ jobs:
           spring.datasource.driver-class-name=org.postgresql.Driver
           spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
-          jwt.secret=ci-test-only-dummy-secret-key-not-used-in-production-with-extra-padding-for-hs512
+          jwt.secret=kojJ1TPzps0fwu4W8gvAuQUWxr9tLKzLS/qDGlAP4Axl5po0wpQEOkRkQOVrf6UGAMT30PvpjZR1HuxvHRUn3Q==
           jwt.issuer=ci-test
           jwt.access-token-expiration-ms=900000
           jwt.refresh-token-expiration-ms=1209600000
