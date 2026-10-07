@@ -1,6 +1,7 @@
-package NotFound.next_campus.global.exception;
+package NotFound.next_campus.global.exception.handler;
 
 import NotFound.next_campus.global.common.CommonResponse;
+import NotFound.next_campus.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,11 +26,14 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     private final ObjectMapper objectMapper;
 
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response,
-                        AccessDeniedException accessDeniedException) throws IOException {
+    public void handle(HttpServletRequest request,
+                       HttpServletResponse response,
+                       AccessDeniedException accessDeniedException) throws IOException {
+
         response.setStatus(ErrorCode.FORBIDDEN.getStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
+
         response.getWriter().write(
                 objectMapper.writeValueAsString(CommonResponse.fail(ErrorCode.FORBIDDEN))
         );

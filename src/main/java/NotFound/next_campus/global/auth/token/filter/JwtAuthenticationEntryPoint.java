@@ -1,6 +1,7 @@
-package NotFound.next_campus.global.exception;
+package NotFound.next_campus.global.auth.token.filter;
 
 import NotFound.next_campus.global.common.CommonResponse;
+import NotFound.next_campus.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,18 +19,26 @@ import java.io.IOException;
  */
 @Component
 @RequiredArgsConstructor
-public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
+public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private final ObjectMapper objectMapper;
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response,
-                          AuthenticationException authException) throws IOException {
-        response.setStatus(ErrorCode.TOKEN_INVALID.getStatus().value());
+    public void commence(HttpServletRequest request,
+                         HttpServletResponse response,
+                         AuthenticationException authException) throws IOException {
+
+        Object attr = request.getAttribute("exception");
+        ErrorCode errorCode = (attr instanceof ErrorCode code) ? code : ErrorCode.TOKEN_INVALID;
+
+        response.setStatus(errorCode.getStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
+
         response.getWriter().write(
-                objectMapper.writeValueAsString(CommonResponse.fail(ErrorCode.TOKEN_INVALID))
+                objectMapper.writeValueAsString(
+                        CommonResponse.fail(errorCode)
+                )
         );
     }
 }
