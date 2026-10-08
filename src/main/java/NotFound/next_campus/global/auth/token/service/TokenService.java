@@ -1,101 +1,99 @@
 package NotFound.next_campus.global.auth.token.service;
 
+import NotFound.next_campus.global.auth.token.dto.TokenDTO;
 import NotFound.next_campus.global.auth.token.dto.request.LoginRequest;
 import NotFound.next_campus.global.auth.token.exception.TokenException;
+import NotFound.next_campus.global.auth.token.repository.RefreshTokenRepository;
+import NotFound.next_campus.global.exception.ErrorCode;
+import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 
-import jakarta.transaction.Transactional;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-
+@Slf4j
 @Service
 public class TokenService {
+
+    private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
-    public final JwtTokenProvider tokenProvider; //일단 public으로 바꿈
-    private final MemberAuthService memberAuthService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-
-    public TokenService(AuthenticationManager authenticationManager, JwtTokenProvider tokenProvider, MemberAuthService memberAuthService) {
+    public TokenService(AuthenticationManager authenticationManager,
+                        JwtTokenProvider jwtTokenProvider,
+                        RefreshTokenRepository refreshTokenRepository) {
+        this.jwtTokenProvider = jwtTokenProvider;
         this.authenticationManager = authenticationManager;
-        this.tokenProvider = tokenProvider;
-        this.memberAuthService = memberAuthService;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     @Transactional
-    public LoginTokens login(LoginRequest req) {
+    public TokenDTO login(LoginRequest req) {
+
         // 1) 인증 수행 (UserDetailsService와 PasswordEncoder로 검증)
-        Authentication auth = authenticationManager.authenticate(
+        authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.getStudentId(), req.getPassword())
         );
-        SecurityContextHolder.getContext().setAuthentication(auth);
-
 
         // 2) 토큰 생성
-        String role = auth.getAuthorities().iterator().next().getAuthority();
-        String access = tokenProvider.createAccessToken(req.getStudentId(), role);
-        String refresh = tokenProvider.createRefreshToken(req.getStudentId());
+        String accessToken = jwtTokenProvider.createAccessToken(req.getStudentId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(req.getStudentId());
 
+        refreshTokenRepository.save(
+                req.getStudentId(),
+                refreshToken,
+                Duration.ofMillis(jwtTokenProvider.getRefreshTokenMillis())
+        );
 
-        // 3) DB에 refresh 저장
-        LocalDateTime expiry = LocalDateTime.ofInstant(Instant.now().plusMillis(tokenProvider.refreshTokenMillis), ZoneOffset.UTC);
-        memberAuthService.saveRefreshToken(req.getStudentId(), refresh, expiry);
-
-        return new LoginTokens(access, refresh);
+        return new TokenDTO(accessToken, refreshToken);
     }
 
     @Transactional
-    public LoginTokens refresh(String refreshToken) {
-        // 토큰 자체 유효성 검증
-        if (refreshToken == null || !tokenProvider.validateToken(refreshToken)) throw new TokenException("Invalid refresh token");
-        String studentId = tokenProvider.getSubjectFromToken(refreshToken);
+    public TokenDTO refresh(String refreshToken) {
 
+        // refresh 토큰 유효성 검증
+        Claims claims = jwtTokenProvider.parseRefreshToken(refreshToken);
 
-        // DB에 저장된 토큰과 비교
-        String stored = memberAuthService.getRefreshToken(Long.valueOf(studentId));
-        if (stored == null || !stored.equals(refreshToken)) throw new TokenException("Refresh token not found or mismatched");
+        Long studentId = Long.valueOf(claims.getSubject());
 
-
-        // 만료 검사 (DB에 저장된 expiry와 비교)
-        LocalDateTime expiry = memberAuthService.getRefreshExpiry(Long.valueOf(studentId));
-        if (expiry == null || LocalDateTime.now(ZoneOffset.UTC).isAfter(expiry)) {
-            memberAuthService.clearRefreshToken(Long.valueOf(studentId));
-            throw new TokenException("Refresh token이 만료되었습니다.");
+        // DB에 저장된 refresh 토큰과 비교
+        String stored = refreshTokenRepository.findByStudentId(studentId)
+                .orElseThrow(() -> new TokenException(ErrorCode.TOKEN_NOT_FOUND));
+        if (!stored.equals(refreshToken)) {
+            throw new TokenException(ErrorCode.TOKEN_NOT_FOUND);
         }
 
+        // 새 access 토큰 발급
+        String newAccess = jwtTokenProvider.createAccessToken(
+                studentId
+        );
 
-        String role = memberAuthService.getRoleByStudentId(Long.valueOf(studentId));
-
-        // 새 토큰 발급 및 DB 갱신
-        String newAccess = tokenProvider.createAccessToken(Long.valueOf(studentId), role);
-        // String newRefresh = tokenProvider.createRefreshToken(Long.valueOf(studentId));
-        // LocalDateTime newExpiry = LocalDateTime.ofInstant(Instant.now().plusMillis(tokenProvider.refreshTokenMillis), ZoneOffset.UTC);
-        // memberAuthService.saveRefreshToken(Long.valueOf(studentId), newRefresh, newExpiry);
-
-
-        return new LoginTokens(newAccess, stored);
+        return new TokenDTO(newAccess, refreshToken);
     }
 
 
     @Transactional
     public void logout(String refreshToken) {
-        if (refreshToken == null) return;
-        if (!tokenProvider.validateToken(refreshToken)) return;
-        String studentId = tokenProvider.getSubjectFromToken(refreshToken);
-        memberAuthService.clearRefreshToken(Long.valueOf(studentId));
-    }
 
+        try {
+            // refresh token 유효성 검사
+            Claims claims = jwtTokenProvider.parseRefreshToken(refreshToken);
 
-    // 내부 토큰 보관용 DTO
-    public static class LoginTokens {
-        public final String accessToken;
-        public final String refreshToken;
-        public LoginTokens(String a, String r) { this.accessToken = a; this.refreshToken = r; }
+            Long studentId = Long.valueOf(claims.getSubject());
+
+            // DB에 저장된 refresh 토큰과 비교
+            String stored = refreshTokenRepository.findByStudentId(studentId)
+                    .orElseThrow(() -> new TokenException(ErrorCode.TOKEN_NOT_FOUND));
+            if (!stored.equals(refreshToken)) {
+                throw new TokenException(ErrorCode.TOKEN_NOT_FOUND);
+            }
+
+            refreshTokenRepository.delete(studentId);
+        } catch (TokenException e) {
+            log.debug("[TokenException] 로그아웃 실패: " + e.getMessage());
+        }
     }
 }

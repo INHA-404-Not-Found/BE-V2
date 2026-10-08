@@ -1,7 +1,9 @@
-package NotFound.next_campus.global.exception;
+package NotFound.next_campus.global.exception.handler;
 
 import NotFound.next_campus.global.auth.token.exception.TokenException;
 import NotFound.next_campus.global.common.CommonResponse;
+import NotFound.next_campus.global.exception.BusinessException;
+import NotFound.next_campus.global.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +28,10 @@ public class GlobalExceptionHandler {
     // 기존 global/auth/token/exception/RestExceptionHandler가 담당하던 TokenException 처리를 흡수
     @ExceptionHandler(TokenException.class)
     public ResponseEntity<CommonResponse<Void>> handleTokenException(TokenException e) {
+        ErrorCode errorCode = e.getErrorCode();
         log.warn("[TokenException] {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new CommonResponse<>(false, "AUTH000", e.getMessage(), null));
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(CommonResponse.fail(errorCode));
     }
 
     // 서비스 로직에서 직접 던지는 AccessDeniedException (SecurityConfig의 인가 규칙이 아니라 도메인 권한 체크에서 발생)

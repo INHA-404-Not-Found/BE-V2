@@ -1,14 +1,16 @@
 package NotFound.next_campus.global.auth.token.service;
 
+import NotFound.next_campus.global.auth.token.exception.TokenException;
+import NotFound.next_campus.global.exception.ErrorCode;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.Map;
 
 /**
  * JWT 토큰 생성/검증 유틸
@@ -17,74 +19,90 @@ import java.util.Map;
  */
 @Component
 public class JwtTokenProvider {
-    private final SecretKey key;
-    public final long accessTokenMillis;
-    public final long refreshTokenMillis;
 
+    private final String issuer;
+    private final SecretKey secretKey;
+
+    @Getter
+    private final long accessTokenMillis;
+    @Getter
+    private final long refreshTokenMillis;
+
+    private static final String ACCESS_TYPE = "access";
+    private static final String REFRESH_TYPE = "refresh";
 
     public JwtTokenProvider(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.access-token-expiration-ms:900000}") long accessTokenMillis,
-            @Value("${jwt.refresh-token-expiration-ms:1209600000}") long refreshTokenMillis
+            @Value("${jwt.issuer}") String issuer,
+            @Value("${jwt.secret}") String secretKey,
+            @Value("${jwt.access-token-expiration-ms}") long accessTokenMillis,
+            @Value("${jwt.refresh-token-expiration-ms}") long refreshTokenMillis
     ) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.issuer = issuer;
+        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
         this.accessTokenMillis = accessTokenMillis;
         this.refreshTokenMillis = refreshTokenMillis;
     }
 
+    // Access Token 생성
+    public String createAccessToken(Long studentId){
 
-    // Access Token 생성 (subject에 studentId+role 포함)
-    public String createAccessToken(Long studentId, String role) {
-        Map<String, Object> claims = Map.of(
-                "studentId", studentId,
-                "role", role
-        );
-
-        Date now = new Date();
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(String.valueOf(studentId))
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + accessTokenMillis))
-                .signWith(key, SignatureAlgorithm.HS512)
-                .compact();
+        return createToken(studentId, ACCESS_TYPE, accessTokenMillis);
     }
 
-
-    // Refresh Token 생성
     public String createRefreshToken(Long studentId) {
+
+        return createToken(studentId, REFRESH_TYPE, refreshTokenMillis);
+    }
+
+    // AccessToken 검증 - JwtAuthenticationFilter가 요청마다 호출
+    public Claims parseAccessToken(String token) {
+
+        return parse(token, ACCESS_TYPE);
+    }
+
+    // RefreshToken 검증
+    public Claims parseRefreshToken(String token) {
+
+        return parse(token, REFRESH_TYPE);
+    }
+
+    private String createToken(Long studentId, String type, long validityMillis) {
+
         Date now = new Date();
+
         return Jwts.builder()
-                .setSubject(String.valueOf(studentId))
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + refreshTokenMillis))
-                .signWith(key, SignatureAlgorithm.HS512)
+                .header().type(type).and()
+                .subject(String.valueOf(studentId))
+                .issuer(issuer)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + validityMillis))
+                .signWith(secretKey)
                 .compact();
     }
-
-
-    // 토큰에서 subject(studentId) 추출
-    public String getSubjectFromToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build()
-                .parseClaimsJws(token).getBody().getSubject();
-    }
-
-
-    // 토큰에서 role 추출
-    public String getRoleFromToken(String token) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(key).build()
-                .parseClaimsJws(token).getBody();
-        return (String) claims.get("role");
-    }
-
 
     // 토큰 유효성 검증
-    public boolean validateToken(String token) {
+    private Claims parse(String token, String expectedType) {
+
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            return true;
-        } catch (JwtException | IllegalArgumentException ex) {
-            return false;
+            Jws<Claims> jws = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .requireIssuer(issuer)      // 우리가 발급한 토큰인가
+                    .build()
+                    .parseSignedClaims(token);  // 서명, 만료 검증
+
+            /* *** 중요 ***
+             * 기존 취약점: refreshToken을 accessToken으로도 사용 가능한 문제 발견
+             * 따라서, 토큰의 타입 검증을 통해 이러한 문제를 해결 */
+            if(!expectedType.equals(jws.getHeader().getType())) {
+                throw new TokenException(ErrorCode.TOKEN_INVALID);
+            }
+
+            // header.payload.signature
+            return jws.getPayload();
+        } catch(ExpiredJwtException e) {
+            throw new  TokenException(ErrorCode.TOKEN_EXPIRED);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new TokenException(ErrorCode.TOKEN_INVALID);
         }
     }
 }

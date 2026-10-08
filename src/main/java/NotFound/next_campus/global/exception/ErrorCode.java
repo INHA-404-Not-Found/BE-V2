@@ -16,9 +16,9 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON003", "서버 오류가 발생했습니다."),
 
     // Auth / Token
-    TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH001", "Invalid refresh token"),
-    TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH002", "Refresh token not found or mismatched"),
-    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH003", "Refresh token이 만료되었습니다."),
+    TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH001", "Invalid token"),
+    TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH002", "token not found or mismatched"),
+    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH003", "token이 만료되었습니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH004", "아이디 또는 비밀번호가 일치하지 않습니다."),
 
     // Member
