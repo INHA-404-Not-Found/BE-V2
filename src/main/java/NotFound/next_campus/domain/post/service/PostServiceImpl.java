@@ -15,23 +15,24 @@ import NotFound.next_campus.domain.post.repository.PostCategoryRepository;
 import NotFound.next_campus.domain.post.repository.PostImageRepository;
 import NotFound.next_campus.domain.post.repository.PostRepository;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
+import NotFound.next_campus.global.exception.BusinessException;
+import NotFound.next_campus.global.exception.ErrorCode;
 import NotFound.next_campus.global.firebase.service.FirebaseStorageService;
 import NotFound.next_campus.global.mail.event.PersonalLostMailEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.*;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -72,7 +73,7 @@ public class PostServiceImpl implements PostService {
         // 게시물 상태가 POLICE 인 경우
         if (Role.USER.equals(member.getRole())
                 && PostStatus.POLICE.equals(dto.getStatus())) {
-            throw new AccessDeniedException("인계 상태 등록 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.POST_STATUS_REGISTER_FORBIDDEN);
         }
 
         // 완료/미완료/인계
@@ -82,14 +83,14 @@ public class PostServiceImpl implements PostService {
         if (PostType.NOTICE.equals(dto.getType())
                 && !Role.ADMIN.equals(member.getRole())) {
 
-            throw new AccessDeniedException("공지는 관리자만 등록할 수 있습니다.");
+            throw new BusinessException(ErrorCode.NOTICE_REGISTER_FORBIDDEN);
         }
 
         // 습득 게시물인 경우
         if (PostType.FIND.equals(dto.getType())) {
             // 분실물 발견 위치
             Location location = locationRepository.findById(dto.getLocationId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 장소입니다."));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.LOCATION_NOT_FOUND));
 
             // 개인 정보(학번)가 포함된 분실물인 경우
             if (Boolean.TRUE.equals(dto.getIsPersonal()) &&
@@ -116,14 +117,16 @@ public class PostServiceImpl implements PostService {
 
         // 분실물(isPersonal=true)인 경우, 해당 학생에게 이메일 발송 (트랜잭션 커밋 후 발송)
         if (Boolean.TRUE.equals(post.getIsPersonal())) {
+
             Member targetStudent = memberRepository.findByStudentId(Long.valueOf(post.getStudentId()))
-                    .orElseThrow(() -> new IllegalArgumentException("해당 학번의 학생을 찾을 수 없습니다."));
-            eventPublisher.publishEvent(new PersonalLostMailEvent(
-                    targetStudent.getEmail(),
-                    targetStudent.getName(),
-                    post.getTitle(),
-                    post.getCreatedAt()
-            ));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.POST_STUDENT_NOT_FOUND));
+
+                eventPublisher.publishEvent(new PersonalLostMailEvent(
+                        targetStudent.getEmail(),
+                        targetStudent.getName(),
+                        post.getTitle(),
+                        post.getCreatedAt()
+                ));
         }
       
         return post.getId();
@@ -133,11 +136,11 @@ public class PostServiceImpl implements PostService {
     public void savePostImages(Long postId, List<MultipartFile> files, CustomUserDetails userDetails) {
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         if (!post.getMember().equals(userDetails.getMember()) &&
                 !Role.ADMIN.equals(userDetails.getRole())) {
-            throw new AccessDeniedException("해당 게시물에 대한 이미지 등록 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.POST_IMAGE_REGISTER_FORBIDDEN);
         }
 
         saveImages(post, files);
@@ -148,12 +151,12 @@ public class PostServiceImpl implements PostService {
 
         Member member = userDetails.getMember();
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         // 해당 게시물의 작성자도 아니고, 관리자도 아닌 경우
         if (!post.getMember().equals(member) &&
                 !Role.ADMIN.equals(member.getRole())) {
-            throw new AccessDeniedException("해당 게시물에 대한 수정 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.POST_UPDATE_FORBIDDEN);
         }
 
         if (dto.getLocationDetail() != null) post.setLocationDetail(dto.getLocationDetail());
@@ -166,7 +169,7 @@ public class PostServiceImpl implements PostService {
         if (dto.getLocationId() != null) {
 
             Location location = locationRepository.findById(dto.getLocationId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 장소입니다."));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.LOCATION_NOT_FOUND));
 
             post.setLocation(location);
         }
@@ -177,7 +180,7 @@ public class PostServiceImpl implements PostService {
             // 일반 사용자는 인계 상태를 수정할 수 없음
             if (Role.USER.equals(member.getRole()) &&
                     PostStatus.POLICE.equals(dto.getStatus())) {
-                throw new AccessDeniedException("인계 상태 수정 권한이 없습니다.");
+                throw new BusinessException(ErrorCode.POST_STATUS_UPDATE_FORBIDDEN);
             }
 
             post.setStatus(dto.getStatus());
@@ -189,7 +192,7 @@ public class PostServiceImpl implements PostService {
             // 일반 사용자는 공지를 게시할 수 없음
             if (Role.USER.equals(member.getRole()) &&
                     PostType.NOTICE.equals(dto.getType())) {
-                throw new AccessDeniedException("공지 게시 권한이 없습니다.");
+                throw new BusinessException(ErrorCode.NOTICE_UPDATE_FORBIDDEN);
             }
 
             post.setType(dto.getType());
@@ -212,11 +215,11 @@ public class PostServiceImpl implements PostService {
     public void updatePostImages(Long postId, List<MultipartFile> files, CustomUserDetails userDetails) {
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         if (!post.getMember().equals(userDetails.getMember()) &&
                 !Role.ADMIN.equals(userDetails.getRole())) {
-            throw new AccessDeniedException("해당 게시물 이미지에 대한 수정 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.POST_IMAGE_UPDATE_FORBIDDEN);
         }
 
         List<PostImage> images = postImageRepository.findByPost(post);
@@ -231,7 +234,7 @@ public class PostServiceImpl implements PostService {
         Member member = userDetails.getMember();
 
         if (!Role.ADMIN.equals(member.getRole())) {
-            throw new IllegalArgumentException("게시물 일괄 수정 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.POST_BULK_UPDATE_FORBIDDEN);
         }
 
         List<Post> posts = postRepository.findAllById(dto.getPostIds());
@@ -246,11 +249,11 @@ public class PostServiceImpl implements PostService {
     public void deletePost(Long postId, CustomUserDetails userDetails) {
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다 ."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         if (!post.getMember().equals(userDetails.getMember()) &&
                 !Role.ADMIN.equals(userDetails.getRole())) {
-            throw new IllegalArgumentException("해당 게시물에 대한 삭제 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.POST_DELETE_FORBIDDEN);
         }
 
         List<PostImage> images = postImageRepository.findByPost(post);
@@ -264,7 +267,7 @@ public class PostServiceImpl implements PostService {
     public void deletePosts(List<Long> postIds, CustomUserDetails userDetails) {
 
         if (!Role.ADMIN.equals(userDetails.getRole())) {
-            throw new IllegalArgumentException("게시물 일괄 삭제 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.POST_BULK_DELETE_FORBIDDEN);
         }
 
         postRepository.deleteAllById(postIds);
@@ -274,7 +277,7 @@ public class PostServiceImpl implements PostService {
     public PostDTO.Response getPostById(Long postId) {
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다 ."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         List<String> categories = postCategoryRepository.findByPost(post).stream()
                 .map(pc -> pc.getCategory().getName())
@@ -454,7 +457,7 @@ public class PostServiceImpl implements PostService {
     private String saveImage(Post post, MultipartFile file) {
 
         if (file.isEmpty()) {
-            throw new IllegalArgumentException("이미지가 존재하지 않습니다.");
+            throw new BusinessException(ErrorCode.IMAGE_NOT_FOUND);
         }
 
         String originalFileName = file.getOriginalFilename();
