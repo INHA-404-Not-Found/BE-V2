@@ -16,9 +16,10 @@ import NotFound.next_campus.domain.post.repository.PostImageRepository;
 import NotFound.next_campus.domain.post.repository.PostRepository;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
 import NotFound.next_campus.global.firebase.service.FirebaseStorageService;
-import NotFound.next_campus.global.mail.service.MailService;
+import NotFound.next_campus.global.mail.event.PersonalLostMailEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class PostServiceImpl implements PostService {
     // private final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
 
     private final MemberRepository memberRepository;
-    private final MailService mailService;
+    private final ApplicationEventPublisher eventPublisher;
     private final LocationRepository locationRepository;
     private final CategoryRepository categoryRepository;
 
@@ -113,16 +114,16 @@ public class PostServiceImpl implements PostService {
             sendLostPostMatchNotification(post, member);
         }
 
-        // 분실물(isPersonal=true)인 경우, 해당 학생에게 이메일 발송
+        // 분실물(isPersonal=true)인 경우, 해당 학생에게 이메일 발송 (트랜잭션 커밋 후 발송)
         if (Boolean.TRUE.equals(post.getIsPersonal())) {
             Member targetStudent = memberRepository.findByStudentId(Long.valueOf(post.getStudentId()))
                     .orElseThrow(() -> new IllegalArgumentException("해당 학번의 학생을 찾을 수 없습니다."));
-            mailService.sendPersonalLostEmail(
+            eventPublisher.publishEvent(new PersonalLostMailEvent(
                     targetStudent.getEmail(),
                     targetStudent.getName(),
                     post.getTitle(),
                     post.getCreatedAt()
-            );
+            ));
         }
       
         return post.getId();
