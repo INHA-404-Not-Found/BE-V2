@@ -1,4 +1,4 @@
-package NotFound.next_campus.global.mail.event;
+package NotFound.next_campus.domain.post.event;
 
 import java.time.LocalDateTime;
 

@@ -7,9 +7,9 @@ import NotFound.next_campus.domain.location.repository.LocationRepository;
 import NotFound.next_campus.domain.member.model.Member;
 import NotFound.next_campus.domain.member.model.Role;
 import NotFound.next_campus.domain.member.repository.MemberRepository;
-import NotFound.next_campus.domain.notification.dto.NotificationDTO;
-import NotFound.next_campus.domain.notification.service.NotificationService;
 import NotFound.next_campus.domain.post.dto.PostDTO;
+import NotFound.next_campus.domain.post.event.LostItemMatchNotificationEvent;
+import NotFound.next_campus.domain.post.event.PersonalLostMailEvent;
 import NotFound.next_campus.domain.post.model.*;
 import NotFound.next_campus.domain.post.repository.PostCategoryRepository;
 import NotFound.next_campus.domain.post.repository.PostImageRepository;
@@ -18,7 +18,6 @@ import NotFound.next_campus.global.auth.user.CustomUserDetails;
 import NotFound.next_campus.global.exception.BusinessException;
 import NotFound.next_campus.global.exception.ErrorCode;
 import NotFound.next_campus.global.firebase.service.FirebaseStorageService;
-import NotFound.next_campus.global.mail.event.PersonalLostMailEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -52,7 +51,6 @@ public class PostServiceImpl implements PostService {
     private final PostCategoryRepository postCategoryRepository;
     private final PostImageRepository postImageRepository;
 
-    private final NotificationService notificationService;
     private final FirebaseStorageService firebaseStorageService;
 
     private static int PAGE_LIMIT = 10;
@@ -521,12 +519,12 @@ public class PostServiceImpl implements PostService {
 
         for (Member lostMember : targetMembers) {
 
-            notificationService.sendAndSaveNotification(NotificationDTO.CreateRequest.builder()
-                    .memberId(lostMember.getId())
-                    .title(title)
-                    .message(message)
-                    .link(link)
-                    .build());
+            eventPublisher.publishEvent(new LostItemMatchNotificationEvent(
+                    lostMember.getId(),
+                    title,
+                    message,
+                    link
+            ));
         }
 
         log.info("[알림 전송 완료] 관련 분실자 수: {}", targetMembers.size());
