@@ -7,9 +7,9 @@ import NotFound.next_campus.domain.location.repository.LocationRepository;
 import NotFound.next_campus.domain.member.model.Member;
 import NotFound.next_campus.domain.member.model.Role;
 import NotFound.next_campus.domain.member.repository.MemberRepository;
-import NotFound.next_campus.domain.notification.dto.NotificationDTO;
-import NotFound.next_campus.domain.notification.service.NotificationService;
 import NotFound.next_campus.domain.post.dto.PostDTO;
+import NotFound.next_campus.domain.post.event.LostItemMatchNotificationEvent;
+import NotFound.next_campus.domain.post.event.PersonalLostMailEvent;
 import NotFound.next_campus.domain.post.model.*;
 import NotFound.next_campus.domain.post.repository.PostCategoryRepository;
 import NotFound.next_campus.domain.post.repository.PostImageRepository;
@@ -18,9 +18,9 @@ import NotFound.next_campus.global.auth.user.CustomUserDetails;
 import NotFound.next_campus.global.exception.BusinessException;
 import NotFound.next_campus.global.exception.ErrorCode;
 import NotFound.next_campus.global.firebase.service.FirebaseStorageService;
-import NotFound.next_campus.global.mail.service.MailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,7 +43,7 @@ public class PostServiceImpl implements PostService {
     // private final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
 
     private final MemberRepository memberRepository;
-    private final MailService mailService;
+    private final ApplicationEventPublisher eventPublisher;
     private final LocationRepository locationRepository;
     private final CategoryRepository categoryRepository;
 
@@ -51,7 +51,6 @@ public class PostServiceImpl implements PostService {
     private final PostCategoryRepository postCategoryRepository;
     private final PostImageRepository postImageRepository;
 
-    private final NotificationService notificationService;
     private final FirebaseStorageService firebaseStorageService;
 
     private static int PAGE_LIMIT = 10;
@@ -114,18 +113,18 @@ public class PostServiceImpl implements PostService {
             sendLostPostMatchNotification(post, member);
         }
 
-        // 분실물(isPersonal=true)인 경우, 해당 학생에게 이메일 발송
+        // 분실물(isPersonal=true)인 경우, 해당 학생에게 이메일 발송 (트랜잭션 커밋 후 발송)
         if (Boolean.TRUE.equals(post.getIsPersonal())) {
 
             Member targetStudent = memberRepository.findByStudentId(Long.valueOf(post.getStudentId()))
                     .orElseThrow(() -> new BusinessException(ErrorCode.POST_STUDENT_NOT_FOUND));
 
-            mailService.sendPersonalLostEmail(
-                    targetStudent.getEmail(),
-                    targetStudent.getName(),
-                    post.getTitle(),
-                    post.getCreatedAt()
-            );
+                eventPublisher.publishEvent(new PersonalLostMailEvent(
+                        targetStudent.getEmail(),
+                        targetStudent.getName(),
+                        post.getTitle(),
+                        post.getCreatedAt()
+                ));
         }
       
         return post.getId();
@@ -520,12 +519,12 @@ public class PostServiceImpl implements PostService {
 
         for (Member lostMember : targetMembers) {
 
-            notificationService.sendAndSaveNotification(NotificationDTO.CreateRequest.builder()
-                    .memberId(lostMember.getId())
-                    .title(title)
-                    .message(message)
-                    .link(link)
-                    .build());
+            eventPublisher.publishEvent(new LostItemMatchNotificationEvent(
+                    lostMember.getId(),
+                    title,
+                    message,
+                    link
+            ));
         }
 
         log.info("[알림 전송 완료] 관련 분실자 수: {}", targetMembers.size());
