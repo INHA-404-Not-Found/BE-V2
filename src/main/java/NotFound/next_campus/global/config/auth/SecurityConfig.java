@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/locations/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/posts/update").hasRole("ADMIN")            // 게시물 일괄 수정
+                        .requestMatchers(HttpMethod.POST, "/posts/delete").hasRole("ADMIN")             // 게시물 일괄 삭제
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
