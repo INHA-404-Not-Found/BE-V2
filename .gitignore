@@ -49,3 +49,6 @@ application-prod.properties
 
 ### VS Code ###
 .vscode/
+
+### DOCS ###
+docs/my
