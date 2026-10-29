@@ -134,10 +134,7 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         // 해당 게시물의 작성자도 아니고, 관리자도 아닌 경우
-        if (!post.getMember().equals(member) &&
-                !Role.ADMIN.equals(member.getRole())) {
-            throw new BusinessException(ErrorCode.POST_UPDATE_FORBIDDEN);
-        }
+        post.validateOwnerOrAdmin(userDetails.getMember(), ErrorCode.POST_UPDATE_FORBIDDEN);
 
         if (dto.getLocationDetail() != null) post.setLocationDetail(dto.getLocationDetail());
         if (dto.getTitle() != null) post.setTitle(dto.getTitle());
@@ -205,13 +202,11 @@ public class PostServiceImpl implements PostService {
     @Override
     public void deletePost(Long postId, CustomUserDetails userDetails) {
 
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        if (!post.getMember().equals(userDetails.getMember()) &&
-                !Role.ADMIN.equals(userDetails.getRole())) {
-            throw new BusinessException(ErrorCode.POST_DELETE_FORBIDDEN);
-        }
+        post.validateOwnerOrAdmin(userDetails.getMember(), ErrorCode.POST_DELETE_FORBIDDEN);
 
         // 게시물 이미지 삭제
         postImageService.deleteAllOf(post);
