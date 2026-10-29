@@ -10,14 +10,15 @@ import NotFound.next_campus.domain.member.repository.MemberRepository;
 import NotFound.next_campus.domain.post.dto.PostDTO;
 import NotFound.next_campus.domain.post.event.LostItemMatchNotificationEvent;
 import NotFound.next_campus.domain.post.event.PersonalLostMailEvent;
-import NotFound.next_campus.domain.post.model.*;
+import NotFound.next_campus.domain.post.model.Post;
+import NotFound.next_campus.domain.post.model.PostCategory;
+import NotFound.next_campus.domain.post.model.PostStatus;
+import NotFound.next_campus.domain.post.model.PostType;
 import NotFound.next_campus.domain.post.repository.PostCategoryRepository;
-import NotFound.next_campus.domain.post.repository.PostImageRepository;
 import NotFound.next_campus.domain.post.repository.PostRepository;
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
 import NotFound.next_campus.global.exception.BusinessException;
 import NotFound.next_campus.global.exception.ErrorCode;
-import NotFound.next_campus.global.firebase.service.FirebaseStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -27,7 +28,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +40,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class PostServiceImpl implements PostService {
 
-    // private final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
-
     private final MemberRepository memberRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final LocationRepository locationRepository;
@@ -49,9 +47,7 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final PostCategoryRepository postCategoryRepository;
-    private final PostImageRepository postImageRepository;
-
-    private final FirebaseStorageService firebaseStorageService;
+    private final PostImageService postImageService;    // 게시물 이미 관련 서비스
 
     private static int PAGE_LIMIT = 10;
 
@@ -126,22 +122,8 @@ public class PostServiceImpl implements PostService {
                         post.getCreatedAt()
                 ));
         }
-      
+
         return post.getId();
-    }
-
-    @Override
-    public void savePostImages(Long postId, List<MultipartFile> files, CustomUserDetails userDetails) {
-
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
-
-        if (!post.getMember().equals(userDetails.getMember()) &&
-                !Role.ADMIN.equals(userDetails.getRole())) {
-            throw new BusinessException(ErrorCode.POST_IMAGE_REGISTER_FORBIDDEN);
-        }
-
-        saveImages(post, files);
     }
 
     @Override
@@ -210,30 +192,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void updatePostImages(Long postId, List<MultipartFile> files, CustomUserDetails userDetails) {
-
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
-
-        if (!post.getMember().equals(userDetails.getMember()) &&
-                !Role.ADMIN.equals(userDetails.getRole())) {
-            throw new BusinessException(ErrorCode.POST_IMAGE_UPDATE_FORBIDDEN);
-        }
-
-        List<PostImage> images = postImageRepository.findByPost(post);
-
-        deleteImages(images);
-        saveImages(post, files);
-    }
-
-    @Override
-    public void updateStatusOfPosts(PostDTO.UpdateStatusRequest dto, CustomUserDetails userDetails) {
-
-        Member member = userDetails.getMember();
-
-        if (!Role.ADMIN.equals(member.getRole())) {
-            throw new BusinessException(ErrorCode.POST_BULK_UPDATE_FORBIDDEN);
-        }
+    public void updateStatusOfPosts(PostDTO.UpdateStatusRequest dto) {
 
         List<Post> posts = postRepository.findAllById(dto.getPostIds());
 
@@ -254,21 +213,18 @@ public class PostServiceImpl implements PostService {
             throw new BusinessException(ErrorCode.POST_DELETE_FORBIDDEN);
         }
 
-        List<PostImage> images = postImageRepository.findByPost(post);
-        // 이미지 삭제
-        deleteImages(images);
+        // 게시물 이미지 삭제
+        postImageService.deleteAllOf(post);
         // 게시물 삭제
         postRepository.delete(post);
     }
 
     @Override
-    public void deletePosts(List<Long> postIds, CustomUserDetails userDetails) {
+    public void deletePosts(List<Long> postIds) {
 
-        if (!Role.ADMIN.equals(userDetails.getRole())) {
-            throw new BusinessException(ErrorCode.POST_BULK_DELETE_FORBIDDEN);
-        }
-
-        postRepository.deleteAllById(postIds);
+        List<Post> posts = postRepository.findAllById(postIds);
+        postImageService.deleteAllOf(posts);
+        postRepository.deleteAll(posts);
     }
 
     @Override
@@ -281,10 +237,7 @@ public class PostServiceImpl implements PostService {
                 .map(pc -> pc.getCategory().getName())
                 .toList();
 
-        List<String> images = postImageRepository.findByPost(post).stream()
-                // .map(pi -> "/uploads/" + pi.getStoredFileName())
-                .map(pi -> firebaseStorageService.getPublicUrl(pi.getStoredFileName()))
-                .toList();
+        List<String> images = postImageService.getUrls(post);
 
         return PostDTO.Response.from(post, categories, images);
     }
@@ -363,8 +316,6 @@ public class PostServiceImpl implements PostService {
 
         // 전체 게시물의 카테고리 목록 가져오기
         List<PostCategory> categories = postCategoryRepository.findAllByPosts(posts);
-        List<PostImage> images = postImageRepository.findAllByPosts(posts);
-
         // (게시물 id, List<카테고리명>)
         Map<Long, List<String>> allPostCategories = categories.stream()
                 .collect(Collectors.groupingBy(
@@ -375,14 +326,7 @@ public class PostServiceImpl implements PostService {
                 ));
 
         // (게시물 id, 이미지 url)
-        Map<Long, List<String>> allPostImages = images.stream()
-                .collect(Collectors.groupingBy(
-                        pi -> pi.getPost().getId(),
-                        Collectors.mapping(
-                                // pi -> "/uploads/" + pi.getStoredFileName(), Collectors.toList()
-                                pi -> firebaseStorageService.getPublicUrl(pi.getStoredFileName()), Collectors.toList()
-                        )
-                ));
+        Map<Long, List<String>> allPostImages = postImageService.getUrls(posts);
 
         for (Post p : posts) {
             List<String> categoriesOfPost = allPostCategories.getOrDefault(p.getId(), List.of());
@@ -405,96 +349,6 @@ public class PostServiceImpl implements PostService {
                     .category(c)
                     .build());
         }
-    }
-
-    private List<String> saveImages(Post post, List<MultipartFile> files) {
-
-        List<String> images = new ArrayList<>();
-
-        for (MultipartFile file : files) {
-
-            String path = saveImage(post, file);
-            images.add(path);
-        }
-
-        return images;
-    }
-
-    // 로컬 서버 저장 방식
-    /*
-    private String saveImage(Post post, MultipartFile file) {
-
-         if (file.isEmpty()) {
-             throw new IllegalArgumentException("이미지가 존재하지 않습니다.");
-         }
-
-         String originalFileName = file.getOriginalFilename();
-         String storedFileName = UUID.randomUUID() + "_" + originalFileName;
-
-         String path = UPLOAD_DIR + storedFileName;
-
-         try {
-             File destination = new File(path);
-             destination.getParentFile().mkdirs();
-             file.transferTo(destination);
-         } catch (IOException e) {
-             throw new IllegalArgumentException("파일 저장 실패");
-         }
-
-         postImageRepository.save(PostImage.builder()
-                 .post(post)
-                 .originalFileName(originalFileName)
-                 .storedFileName(storedFileName)
-                 .build());
-
-         return "/uploads/" + storedFileName;
-     }
-    */
-
-    // Firebase
-    private String saveImage(Post post, MultipartFile file) {
-
-        if (file.isEmpty()) {
-            throw new BusinessException(ErrorCode.IMAGE_NOT_FOUND);
-        }
-
-        String originalFileName = file.getOriginalFilename();
-        String storedFileName = firebaseStorageService.upload(file);
-
-        postImageRepository.save(PostImage.builder()
-                .post(post)
-                .originalFileName(originalFileName)
-                .storedFileName(storedFileName)
-                .build());
-
-        return firebaseStorageService.getPublicUrl(storedFileName);
-    }
-
-    private void deleteImages(List<PostImage> images) {
-
-        for (PostImage image : images) {
-
-            deleteImage(image);
-        }
-
-        postImageRepository.deleteAll(images);
-    }
-
-    /*
-     private void deleteImage(PostImage image) {
-
-         String oldFileName = image.getStoredFileName();
-         File oldFile = new File(UPLOAD_DIR + oldFileName);
-         if (oldFile.exists()) {
-             oldFile.delete();
-         }
-     }
-    */
-
-    // Firebase
-    private void deleteImage(PostImage image) {
-
-        firebaseStorageService.delete(image.getStoredFileName());
     }
 
     // 신규 습득 게시물 등록 시, 같은 카테고리의 분실 신고자들에게 알림 전송
