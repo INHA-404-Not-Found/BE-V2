@@ -348,9 +348,9 @@ public class PostServiceImpl implements PostService {
 
     private void savePostCategory(Post post, List<Long> categories) {
 
-        // 카테고리 누락 시 에러
+        // 카테고리 누락 시 건너 뛰기 (공지 등록인 경우)
         if (categories == null || categories.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT);
+            return;
         }
 
         // 게시물 카테고리 저장
