@@ -14,6 +14,8 @@ public enum ErrorCode {
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "COMMON001", "잘못된 입력입니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON002", "권한이 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON003", "서버 오류가 발생했습니다."),
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "COMMON004", "지원하지 않는 HTTP 메서드입니다."),
+    RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON005", "존재하지 않는 경로입니다."),
 
     // Auth / Token
     TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH001", "Invalid token"),
