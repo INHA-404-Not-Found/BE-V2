@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,11 +41,12 @@ public class TokenController {
     @Operation(summary = "로그인", description = "학번과 비밀번호로 로그인합니다. isWeb이 true면 refresh token을 HttpOnly 쿠키로 전달하고, false면 access/refresh token을 모두 JSON으로 반환합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "로그인 성공"),
+            @ApiResponse(responseCode = "400", description = "COMMON001 - 잘못된 입력입니다. (학번 누락 · 숫자가 아닌 학번, 비밀번호 누락 · 빈 값)"),
             @ApiResponse(responseCode = "401", description = "AUTH004 - 아이디 또는 비밀번호가 일치하지 않습니다.")
     })
     @SecurityRequirements
     @PostMapping("/login")
-    public ResponseEntity<CommonResponse<LoginResponse>> login(@RequestBody LoginRequest req, HttpServletResponse response) {
+    public ResponseEntity<CommonResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest req, HttpServletResponse response) {
         TokenDTO tokens = tokenService.login(req);
 
 
