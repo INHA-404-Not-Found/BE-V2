@@ -2,6 +2,9 @@ package NotFound.next_campus.domain.post.model;
 
 import NotFound.next_campus.domain.location.model.Location;
 import NotFound.next_campus.domain.member.model.Member;
+import NotFound.next_campus.domain.member.model.Role;
+import NotFound.next_campus.global.exception.BusinessException;
+import NotFound.next_campus.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -67,4 +70,11 @@ public class Post {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public void validateOwnerOrAdmin(Member requester, ErrorCode onDenied) {
+
+        boolean isOwner = member.getId().equals(requester.getId());
+        boolean isAdmin = requester.getRole() == Role.ADMIN;
+        if(!isOwner && !isAdmin) throw new BusinessException(onDenied);
+    }
 }

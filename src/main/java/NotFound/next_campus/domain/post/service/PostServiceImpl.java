@@ -49,48 +49,61 @@ public class PostServiceImpl implements PostService {
     private final PostCategoryRepository postCategoryRepository;
     private final PostImageService postImageService;    // 게시물 이미 관련 서비스
 
-    private static int PAGE_LIMIT = 10;
+    private static final int PAGE_LIMIT = 10;
 
     @Override
-    public Long savePost(PostDTO.CreateRequest dto, CustomUserDetails userDetails) {
+    public Long savePost(PostDTO.CreateRequest dto, CustomUserDetails user) {
 
-        Member member = userDetails.getMember();
+        boolean isPersonal = Boolean.TRUE.equals(dto.getIsPersonal());
+
+        // 학번(개인정보) 유효성 검사
+        if (isPersonal) {
+            // 습득 게시물에 포함된 학번(개인정보)이 올바르지 않은 경우
+            if (!PostType.FIND.equals(dto.getType())
+                    || dto.getStudentId() == null
+                    || !dto.getStudentId().matches("\\d{8}")) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT);
+            }
+        }
+
+        Member member = user.getMember();
 
         Post post = Post.builder()
                 .member(member)
                 .title(dto.getTitle())
                 .content(dto.getContent())
                 .type(dto.getType())
-                .isPersonal(dto.getIsPersonal())
+                .isPersonal(dto.getIsPersonal() ? null : false)
                 .build();
 
-        // 게시물 상태가 POLICE 인 경우
+        // user가 경찰서 인계 여부를 수정할 수 없음 
         if (Role.USER.equals(member.getRole())
                 && PostStatus.POLICE.equals(dto.getStatus())) {
             throw new BusinessException(ErrorCode.POST_STATUS_REGISTER_FORBIDDEN);
         }
-
         // 완료/미완료/인계
         post.setStatus(dto.getStatus());
 
-        // 공지사항인 경우
+        // user는 공지사항을 올릴 수 없음
         if (PostType.NOTICE.equals(dto.getType())
                 && !Role.ADMIN.equals(member.getRole())) {
-
             throw new BusinessException(ErrorCode.NOTICE_REGISTER_FORBIDDEN);
         }
 
         // 습득 게시물인 경우
         if (PostType.FIND.equals(dto.getType())) {
+
+            // 장소 누락 시 에러
+            if (dto.getLocationId() == null) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT);
+            }
+
             // 분실물 발견 위치
             Location location = locationRepository.findById(dto.getLocationId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.LOCATION_NOT_FOUND));
 
-            // 개인 정보(학번)가 포함된 분실물인 경우
-            if (Boolean.TRUE.equals(dto.getIsPersonal()) &&
-                    dto.getStudentId() != null &&
-                    !dto.getStudentId().isEmpty()) {
-
+            // 개인 정보(학번)가 포함된 습득물인 경우
+            if (isPersonal) {
                 post.setStudentId(dto.getStudentId());
             }
 
@@ -101,26 +114,27 @@ public class PostServiceImpl implements PostService {
 
         // 게시물 저장
         postRepository.save(post);
-
         savePostCategory(post, dto.getCategories());
 
+        /* ============================== 알림 발송 ============================== */
+
         // 습득 게시물인 경우, 동일 카테고리의 분실 신고자 목록에 알림 전송
-        if(PostType.FIND.equals(post.getType())) {
+        if (PostType.FIND.equals(post.getType())) {
             sendLostPostMatchNotification(post, member);
         }
 
-        // 분실물(isPersonal=true)인 경우, 해당 학생에게 이메일 발송 (트랜잭션 커밋 후 발송)
-        if (Boolean.TRUE.equals(post.getIsPersonal())) {
+        // 학번이 적힌 습득물의 주인에게 이메일 발송 (트랜잭션 커밋 후 발송)
+        if (isPersonal) {
 
             Member targetStudent = memberRepository.findByStudentId(Long.valueOf(post.getStudentId()))
                     .orElseThrow(() -> new BusinessException(ErrorCode.POST_STUDENT_NOT_FOUND));
 
-                eventPublisher.publishEvent(new PersonalLostMailEvent(
-                        targetStudent.getEmail(),
-                        targetStudent.getName(),
-                        post.getTitle(),
-                        post.getCreatedAt()
-                ));
+            eventPublisher.publishEvent(new PersonalLostMailEvent(
+                    targetStudent.getEmail(),
+                    targetStudent.getName(),
+                    post.getTitle(),
+                    post.getCreatedAt()
+            ));
         }
 
         return post.getId();
@@ -134,10 +148,7 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         // 해당 게시물의 작성자도 아니고, 관리자도 아닌 경우
-        if (!post.getMember().equals(member) &&
-                !Role.ADMIN.equals(member.getRole())) {
-            throw new BusinessException(ErrorCode.POST_UPDATE_FORBIDDEN);
-        }
+        post.validateOwnerOrAdmin(userDetails.getMember(), ErrorCode.POST_UPDATE_FORBIDDEN);
 
         if (dto.getLocationDetail() != null) post.setLocationDetail(dto.getLocationDetail());
         if (dto.getTitle() != null) post.setTitle(dto.getTitle());
@@ -205,13 +216,11 @@ public class PostServiceImpl implements PostService {
     @Override
     public void deletePost(Long postId, CustomUserDetails userDetails) {
 
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        if (!post.getMember().equals(userDetails.getMember()) &&
-                !Role.ADMIN.equals(userDetails.getRole())) {
-            throw new BusinessException(ErrorCode.POST_DELETE_FORBIDDEN);
-        }
+        post.validateOwnerOrAdmin(userDetails.getMember(), ErrorCode.POST_DELETE_FORBIDDEN);
 
         // 게시물 이미지 삭제
         postImageService.deleteAllOf(post);
@@ -259,8 +268,8 @@ public class PostServiceImpl implements PostService {
     /* 필터링 검색 */
     @Override
     public List<PostDTO.Response> getPostsByTags(PostStatus status, PostType type,
-                                                Long locationId, Long categoryId,
-                                                Pageable pageable, int pageNo) {
+                                                 Long locationId, Long categoryId,
+                                                 Pageable pageable, int pageNo) {
 
         pageable = PageRequest.of(pageNo, PAGE_LIMIT, Sort.by(Sort.Direction.DESC, "createdAt"));
 
@@ -338,6 +347,11 @@ public class PostServiceImpl implements PostService {
     }
 
     private void savePostCategory(Post post, List<Long> categories) {
+
+        // 카테고리 누락 시 건너 뛰기 (공지 등록인 경우)
+        if (categories == null || categories.isEmpty()) {
+            return;
+        }
 
         // 게시물 카테고리 저장
         List<Category> categoryList = categoryRepository.findAllById(categories);

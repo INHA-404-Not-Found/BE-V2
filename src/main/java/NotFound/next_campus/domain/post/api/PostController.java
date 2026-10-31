@@ -143,7 +143,7 @@ public class PostController {
             @Parameter(description = "페이지 번호 (1부터 시작, 생략 시 1)")
             @RequestParam(required = false, defaultValue = "0", value = "page") int pageNo
     ) {
-        pageNo = (pageNo == 0) ? 0 : pageNo - 1;
+        pageNo = Math.max(pageNo - 1, 0);
 
         return CommonResponse.ok(
                 postService.getAllPostList(pageable, pageNo)
@@ -164,7 +164,7 @@ public class PostController {
             @Parameter(description = "페이지 번호 (1부터 시작, 생략 시 1)")
             @RequestParam(required = false, defaultValue = "0", value = "page") int pageNo
     ) {
-        pageNo = (pageNo == 0) ? 0 : pageNo - 1;
+        pageNo = Math.max(pageNo - 1, 0);
 
         return CommonResponse.ok(
                 postService.getPostsByTags(status, type, locationId, categoryId,
@@ -182,7 +182,7 @@ public class PostController {
             @Parameter(description = "페이지 번호 (1부터 시작, 생략 시 1)")
             @RequestParam(required = false, defaultValue = "0", value = "page") int pageNo
     ) {
-        pageNo = (pageNo == 0) ? 0 : pageNo - 1;
+        pageNo = Math.max(pageNo - 1, 0);
 
         return CommonResponse.ok(
                 postService.getPostsByKeyword(keyword, pageable, pageNo)
@@ -201,7 +201,7 @@ public class PostController {
             @RequestParam(required = false, defaultValue = "0", value = "page") int pageNo,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        pageNo = (pageNo == 0) ? 0 : pageNo - 1;
+        pageNo = Math.max(pageNo - 1, 0);
 
         return CommonResponse.ok(
                 postService.getMyPosts(pageable, pageNo, userDetails)
@@ -223,7 +223,7 @@ public class PostController {
             @Parameter(description = "페이지 번호 (1부터 시작, 생략 시 1)")
             @RequestParam(required = false, defaultValue = "0", value = "page") int pageNo
     ) {
-        pageNo = (pageNo == 0) ? 0 : pageNo - 1;
+        pageNo = Math.max(pageNo - 1, 0);
 
         return CommonResponse.ok(
                 postService.getPostsByKeywordAndTags(

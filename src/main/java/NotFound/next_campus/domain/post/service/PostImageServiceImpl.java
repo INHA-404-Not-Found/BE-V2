@@ -63,10 +63,8 @@ public class PostImageServiceImpl implements PostImageService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        if (!post.getMember().equals(user.getMember()) &&
-                !Role.ADMIN.equals(user.getRole())) {
-            throw new BusinessException(ErrorCode.POST_IMAGE_REGISTER_FORBIDDEN);
-        }
+        // 권한 체크
+        post.validateOwnerOrAdmin(user.getMember(), ErrorCode.POST_IMAGE_REGISTER_FORBIDDEN);
 
         saveImages(post, files);
     }
@@ -78,13 +76,10 @@ public class PostImageServiceImpl implements PostImageService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        if (!post.getMember().equals(user.getMember()) &&
-                !Role.ADMIN.equals(user.getRole())) {
-            throw new BusinessException(ErrorCode.POST_IMAGE_UPDATE_FORBIDDEN);
-        }
+        // 권한 체크
+        post.validateOwnerOrAdmin(user.getMember(), ErrorCode.POST_IMAGE_UPDATE_FORBIDDEN);
 
         List<PostImage> images = postImageRepository.findByPost(post);
-
         saveImages(post, files);    // 신규 이미지 등록
         deleteImages(images);       // 기존 이미지 삭제
     }

@@ -7,14 +7,48 @@ import NotFound.next_campus.global.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // 400 핸들러
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+            MethodArgumentNotValidException.class,
+            MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class
+    })
+    public ResponseEntity<CommonResponse<Void>> handleBadRequest(Exception e) {
+        log.warn("[BadRequest] {}", e.getMessage());
+        return ResponseEntity.badRequest().body(CommonResponse.fail(ErrorCode.INVALID_INPUT));
+    }
+
+    // 405 핸들러
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<CommonResponse<Void>> handleMethodNotAllowed(HttpRequestMethodNotSupportedException e) {
+        log.warn("[MethodNotAllowed] {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(CommonResponse.fail(ErrorCode.METHOD_NOT_ALLOWED));
+    }
+
+    // 404 핸들러
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<CommonResponse<Void>> handleNoResource(NoResourceFoundException e) {
+        log.warn("[NotFound] {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(CommonResponse.fail(ErrorCode.RESOURCE_NOT_FOUND));
+    }
 
     // 서비스 계층에서 던지는 모든 비즈니스 예외 -> ErrorCode에 정의된 상태/코드/메시지 그대로 응답
     @ExceptionHandler(BusinessException.class)
