@@ -8,6 +8,8 @@ import NotFound.next_campus.domain.notification.repository.NotificationRepositor
 import NotFound.next_campus.global.auth.user.CustomUserDetails;
 import NotFound.next_campus.global.exception.BusinessException;
 import NotFound.next_campus.global.exception.ErrorCode;
+import NotFound.next_campus.global.firebase.repository.FcmTokenRepository;
+import NotFound.next_campus.global.firebase.service.FirebaseMessagingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -29,8 +31,8 @@ public class NotificationServiceImpl implements  NotificationService {
     private final MemberRepository memberRepository;
     private final NotificationRepository notificationRepository;
 
-    // private final FcmTokenRepository fcmTokenRepository;
-    // private final FirebaseMessagingService firebaseMessagingService;
+    private final FcmTokenRepository fcmTokenRepository;
+    private final FirebaseMessagingService firebaseMessagingService;
     // private final ExpoPushService expoPushService;
 
     private static int PAGE_LIMIT = 10;
@@ -42,31 +44,6 @@ public class NotificationServiceImpl implements  NotificationService {
         Member member = memberRepository.findById(dto.getMemberId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        /*// 해당 회원의 모든 FCM 토큰 조회
-        List<String> tokens = fcmTokenRepository.findTokensByMember(member);
-
-        // FCM 토큰이 없는 경우 그냥 넘어감
-        if (tokens.isEmpty()) {
-
-            log.warn("[알림 전송 실패] memberId={} 의 FCM 토큰이 존재하지 않습니다.", member.getId());
-            return;
-        }
-*/
-       /* expoPushService.sendToMultiple(
-                tokens,
-                dto.getTitle(),
-                dto.getMessage(),
-                Map.of("link", dto.getLink() == null ? "" : dto.getLink())  // data
-        );*/
-
-        /*for (String token : tokens) {
-            firebaseMessagingService.sendNotification(
-                    token,
-                    dto.getTitle(),
-                    dto.getMessage()
-            );
-        }*/
-
         notificationRepository.save(
                 Notification.builder()
                         .member(member)
@@ -76,6 +53,24 @@ public class NotificationServiceImpl implements  NotificationService {
                         .isRead(false)
                         .build()
         );
+
+        // 해당 회원의 모든 FCM 토큰 조회
+        List<String> tokens = fcmTokenRepository.findTokensByMember(member);
+
+        // FCM 토큰이 없는 경우 푸시는 건너뛰고 알림 저장만 함
+        if (tokens.isEmpty()) {
+
+            log.warn("[푸시 발송 건너뜀] memberId={} 의 FCM 토큰이 존재하지 않습니다.", member.getId());
+            return;
+        }
+
+        for (String token : tokens) {
+            firebaseMessagingService.sendNotification(
+                    token,
+                    dto.getTitle(),
+                    dto.getMessage()
+            );
+        }
 
         log.info("[알림 저장 및 전송 성공] memberId={} ({})", member.getId(), dto.getTitle());
     }
